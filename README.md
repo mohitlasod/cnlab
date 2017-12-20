@@ -1,2 +1,2 @@
-# cnlab
-Computer Networks (C and NS2)
+# CN-Lab
+This repository contains Computer Networks Lab Programs for VTU students.
