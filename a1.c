@@ -1,81 +1,72 @@
-Program 1: Using TCP/IP sockets, write a client-server program to make client send the file name and the server to send back the contents of the requested file name ìsample.txtî with the following contents: ìHello we are at Computer Networks Labî  Display suitable error message in case the file is not present in the server.
-
-
+Program 1: Using TCP/IP sockets, write a client-server program to make client send the file name and the server to send back the contents of the requested file name ‚Äúsample.txt‚Äù with the following contents: ‚ÄúHello we are at Computer Networks Lab‚Äù  Display suitable error message in case the file is not present in the server.
 server.c
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <netinet/in.h>
+int main(){
+	int welcome,new_soc,fd,n;
+	char buff[1024],fname[50];
+	struct sockaddr_in addr;
+	welcome=socket(PF_INET,SOCK_STREAM,0);
+	addr.sin_family=AF_INET;
+	addr.sin_port=htons(7891);
+	addr.sin_addr.s_addr=inet_addr("127.0.0.1");
+	bind(welcome,(struct  sockaddr*)& addr,sizeof(addr));
+	printf("Server is online \n");
+	listen(welcome,5);
+	new_soc=accept(welcome,NULL,NULL);
+	recv(new_soc,fname,50,0);
+	printf("%s file requested \n",fname);
+	fd=open(fname,O_RDONLY);
+	if (fd<0){
+		send(new_soc,"NOT FOUND",9,0);
+	}
+	else{
+		while((n=read(fd,buff,sizeof(buff)))>0){
+			send(new_soc,buff,n,0);
+		}
+	}
+	close(fd);
+	return 0;		
+}	
+	
+client.c
 #include<stdio.h>
-#include<unistd.h>
+#include<stdlib.h>
 #include<fcntl.h>
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<sys/socket.h>
-#include<netinet/in.h>
-#include<stdlib.h>
-
-int main()
-
-{
-
-  int cs,ns,fd,n;
-  int bufsize=1024;
-  char *buffer=malloc(bufsize);
-  struct sockaddr_in address;
-  char fname[255];
-  address.sin_family=AF_INET;
-  address.sin_port=htons(15000);
-  address.sin_addr.s_addr=
-INADDR_ANY;
-  cs=socket(AF_INET,SOCK_STREAM,0);
-  bind(cs,(struct sockaddr *)&address,sizeof(address));
-  listen(cs,3);
-  ns=accept(cs,(struct sockaddr *)NULL,NULL);
-  recv(ns,fname,255,0);
-  fd=open(fname,O_RDONLY);
-  n=read(fd,buffer,bufsize);
-  send(ns,buffer,n,0);
-  close(ns);
-  return close(cs);
-
-}
-
-
-client.c
-
-#include<stdio.h>
 #include<unistd.h>
-#include<fcntl.h>
-#include<sys/types.h>
-#include<sys/stat.h>
-#include<sys/socket.h>
 #include<netinet/in.h>
-#include<stdlib.h>
-
-int main(int argc,char **argv)
-{
-  int cs,n;
-  int bufsize=1024;
-  char *buffer=malloc(bufsize);
-  char fname[255];
-  struct sockaddr_in address;
-  address.sin_family=AF_INET;
-  address.sin_port=htons(15000);
-  inet_pton(AF_INET,argv[1],&address.sin_addr);
-  cs=socket(AF_INET,SOCK_STREAM,0);
-  connect(cs,(struct sockaddr *)&address,sizeof(address));
-  printf("\nEnter filename: ");scanf("%s",fname);
-  send(cs,fname,255,0);
-  while((recv(cs,buffer,bufsize,0))>0)
-  printf("%s",buffer);
-  printf("\nEOF\n");
-  return close(cs);
+int main(){
+	int soc,n;
+	char buff[1024],fname[50];
+	struct sockaddr_in addr;
+	soc=socket(PF_INET,SOCK_STREAM,0);
+	addr.sin_family=AF_INET;
+	addr.sin_port=htons(7891);
+	addr.sin_addr.s_addr=inet_addr("127.0.0.1");
+	while(connect(soc,(struct  sockaddr*)&addr,sizeof(addr)));
+	printf("Connection Established \n ");
+	printf("Enter the file required : \n");
+	scanf("%s",fname);
+	send(soc,fname,50,0);
+	while((n=recv(soc,buff,sizeof(buff),0))>0){
+		printf("%s",buff);
+	}
+	return 0;
 }
+
 steps to execute:
-
 -->netstat -tulnp
 -->gcc server.c
 -->./a.out 631
-
 open another terminal
-
 -->gcc client.c
 -->./a.out 127.0.0.1
